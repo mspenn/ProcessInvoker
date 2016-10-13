@@ -37,7 +37,11 @@ public class TestCaseExecutor {
         try {
             timeElapsed = future.get(testCase.getTimeLimit(), testCase.getTimeUnit());
             int exitValue = task.getExitValue();
-            onExecutionSuccess(makeExecutionResult(testCase, task, null, timeElapsed, exitValue));
+            if (exitValue == 0) {
+                onExecutionSuccess(makeExecutionResult(testCase, task, null, timeElapsed, exitValue));
+            } else {
+                onExecutionFault(makeExecutionResult(testCase, task, null, timeElapsed, task.getExitValue()));
+            }
             onExecutionExceptionFinished(future, task, null);
             return exitValue == 0;
         } catch (InterruptedException e) {

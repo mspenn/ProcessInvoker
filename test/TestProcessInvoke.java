@@ -2,10 +2,7 @@ import com.microsmadio.invoker.executor.TestCase;
 import com.microsmadio.invoker.executor.TestCaseExecutor;
 import com.microsmadio.invoker.listener.*;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
+import java.io.*;
 
 /**
  * Created with IntelliJ IDEA.
@@ -16,6 +13,20 @@ import java.io.InputStreamReader;
  */
 public class TestProcessInvoke {
     public static void main(String[] args) {
+        IWriteProcessStreamListener writeStreamHandler = new IWriteProcessStreamListener() {
+            @Override
+            public void onWriteProcessStream(OutputStream stream) {
+                BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(stream));
+                try {
+                    bw.write("hello\n");
+                    bw.write("1");
+                    bw.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        };
+
         IReadProcessStreamListener readStreamHandler = new IReadProcessStreamListener() {
             @Override
             public void onReadProcessStream(InputStream stream) {
@@ -38,6 +49,7 @@ public class TestProcessInvoke {
                 }
             }
         };
+
         TestCase t1 = new TestCase("res/sim_a.exe", 1000);
         t1.setTaskErrorCallback(readStreamHandler);
         t1.setTaskOutputCallback(readStreamHandler);
@@ -49,6 +61,14 @@ public class TestProcessInvoke {
         TestCase t3 = new TestCase("res/sim_c.exe", 2000);
         t3.setTaskErrorCallback(readStreamHandler);
         t3.setTaskOutputCallback(readStreamHandler);
+
+        // t4 input:
+        // string\n
+        // int
+        TestCase t4 = new TestCase("res/sim_d.exe", 1000);
+        t4.setTaskInputCallback(writeStreamHandler);
+        t4.setTaskErrorCallback(readStreamHandler);
+        t4.setTaskOutputCallback(readStreamHandler);
 
         TestCaseExecutor pp = new TestCaseExecutor();
         pp.addTimeOutListener(new ITimeOutListener() {
@@ -85,6 +105,8 @@ public class TestProcessInvoke {
         r = pp.submit(t2);
         System.out.println(r);
         r = pp.submit(t3);
+        System.out.println(r);
+        r = pp.submit(t4);
         System.out.println(r);
         pp.shutdown();
     }

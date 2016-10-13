@@ -1,10 +1,14 @@
 package com.microsmadio.invoker.process;
 
 import com.microsmadio.invoker.listener.IReadProcessStreamListener;
+import com.microsmadio.invoker.listener.IWriteProcessStreamListener;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 
@@ -18,9 +22,11 @@ import java.util.concurrent.ExecutorService;
 public class ProcessHandler {
     private Process process = null;
     private String command = null;
+    private String argument[] = null;
     private int exitValue = -1;
     private IReadProcessStreamListener readProcessOutputListener;
     private IReadProcessStreamListener readProcessErrorListener;
+    private IWriteProcessStreamListener writeProcessStreamListener;
     private Thread errorReadThread = null;
     private Thread outputReadThread = null;
     private static Runtime RUN_TIME = Runtime.getRuntime();
@@ -29,6 +35,13 @@ public class ProcessHandler {
         this.command = command;
     }
 
+    private void createWriteProcessStream(
+            final OutputStream input,
+            final IWriteProcessStreamListener writeProcessStreamListener) {
+        if (null != writeProcessStreamListener) {
+            writeProcessStreamListener.onWriteProcessStream(input);
+        }
+    }
 
     private Thread createReadProcessStreamThread(
             final InputStream output,
@@ -58,7 +71,17 @@ public class ProcessHandler {
 
     public boolean exec() throws InterruptedException, IOException {
         try {
-            process = RUN_TIME.exec(command);
+            ProcessBuilder builder = new ProcessBuilder();
+            if (argument != null) {
+                List<String> cmds = new ArrayList<String>();
+                cmds.add(command);
+                for (String item : argument) {
+                    cmds.add(item);
+                }
+                builder.command(cmds);
+            }
+            process = builder.start();//RUN_TIME.exec(command);
+            createWriteProcessStream(process.getOutputStream(), writeProcessStreamListener);
             errorReadThread = createReadProcessStreamThread(process.getErrorStream(), readProcessErrorListener);
             outputReadThread = createReadProcessStreamThread(process.getInputStream(), readProcessOutputListener);
             exitValue = process.waitFor();
@@ -93,5 +116,13 @@ public class ProcessHandler {
 
     public void setReadProcessErrorListener(IReadProcessStreamListener readProcessErrorListener) {
         this.readProcessErrorListener = readProcessErrorListener;
+    }
+
+    public void setWriteProcessStreamListener(IWriteProcessStreamListener writeProcessStreamListener) {
+        this.writeProcessStreamListener = writeProcessStreamListener;
+    }
+
+    public void setArgument(String[] argument) {
+        this.argument = argument;
     }
 }

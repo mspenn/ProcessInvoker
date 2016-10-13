@@ -1,6 +1,7 @@
 package com.microsmadio.invoker.executor;
 
 import com.microsmadio.invoker.listener.IReadProcessStreamListener;
+import com.microsmadio.invoker.listener.IWriteProcessStreamListener;
 import com.microsmadio.invoker.process.ProcessHandler;
 
 import java.io.PrintStream;
@@ -23,6 +24,7 @@ public class Task implements Callable<Long> {
 
     public void setArguments(final String[] args) {
         this.arguments = args;
+        processHandler.setArgument(args);
     }
 
     @Override
@@ -46,6 +48,10 @@ public class Task implements Callable<Long> {
 
     public void setReadExecutionErrorCallback(IReadProcessStreamListener readExecutionOutputCallback) {
         processHandler.setReadProcessErrorListener(readExecutionOutputCallback);
+    }
+
+    public void setWriteExecutionInputCallback(IWriteProcessStreamListener writeExecutionInputCallback) {
+        processHandler.setWriteProcessStreamListener(writeExecutionInputCallback);
     }
 
     public int getExitValue() {
