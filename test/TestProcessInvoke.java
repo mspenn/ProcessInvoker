@@ -16,11 +16,16 @@ public class TestProcessInvoke {
         IWriteProcessStreamListener writeStreamHandler = new IWriteProcessStreamListener() {
             @Override
             public void onWriteProcessStream(OutputStream stream) {
-                BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(stream));
                 try {
-                    bw.write("hello\n");
-                    bw.write("1");
+                    BufferedReader input = new BufferedReader(new FileReader(("res/in.txt")));
+                    BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(stream));
+                    String line = null;
+                    while ((line = input.readLine()) != null) {
+                        bw.write(line);
+                        bw.newLine();
+                    }
                     bw.close();
+                    input.close();
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
@@ -62,13 +67,17 @@ public class TestProcessInvoke {
         t3.setTaskErrorCallback(readStreamHandler);
         t3.setTaskOutputCallback(readStreamHandler);
 
-        // t4 input:
+        // sim_d.exe input:
         // string\n
         // int
-        TestCase t4 = new TestCase("res/sim_d.exe", 1000);
-        t4.setTaskInputCallback(writeStreamHandler);
+        TestCase t4 = new TestCase("res/sim_d.exe < res/in.txt", 1000);
         t4.setTaskErrorCallback(readStreamHandler);
         t4.setTaskOutputCallback(readStreamHandler);
+
+        TestCase t5 = new TestCase("res/sim_d.exe", 1000);
+        t5.setTaskInputCallback(writeStreamHandler);
+        t5.setTaskErrorCallback(readStreamHandler);
+        t5.setTaskOutputCallback(readStreamHandler);
 
         TestCaseExecutor pp = new TestCaseExecutor();
         pp.addTimeOutListener(new ITimeOutListener() {
@@ -104,9 +113,11 @@ public class TestProcessInvoke {
         System.out.println(r);
         r = pp.submit(t2);
         System.out.println(r);
-        r = pp.submit(t3);
-        System.out.println(r);
+//        r = pp.submit(t3);
+//        System.out.println(r);
         r = pp.submit(t4);
+        System.out.println(r);
+        r = pp.submit(t5);
         System.out.println(r);
         pp.shutdown();
     }
